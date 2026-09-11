@@ -1,4 +1,6 @@
-import type { DimensionDef } from '../domain/Rubric.js';
+import { Rubric, type DimensionDef } from '../domain/Rubric.js';
+
+export const RUBRIC_VERSION = 'v1';
 
 /**
  * The 8 rubric dimensions are global/shared across every problem (decision 8): what varies
@@ -87,3 +89,11 @@ export const GLOBAL_RUBRIC_DIMENSIONS: DimensionDef[] = [
     ],
   },
 ];
+
+/**
+ * Flat rubric with no problem-specific weight overrides (every dimension defaults to weight 1,
+ * see `Rubric.getWeight`). For real per-problem weighting, build a `Rubric` from
+ * `problem.rubricWeights` and `problem.scopeBoundary` instead (see `seedDb.ts`). This constant
+ * exists for wiring/tests that don't care about per-problem weighting.
+ */
+export const globalRubric = new Rubric(RUBRIC_VERSION, GLOBAL_RUBRIC_DIMENSIONS, {}, '');
