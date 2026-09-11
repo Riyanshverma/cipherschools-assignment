@@ -1,6 +1,6 @@
 import type Database from 'better-sqlite3';
 import { SEED_PROBLEMS } from './problems.js';
-import { GLOBAL_RUBRIC_DIMENSIONS } from './rubric.js';
+import { GLOBAL_RUBRIC_DIMENSIONS, RUBRIC_VERSION } from './rubric.js';
 import { SqliteLearnerRepository } from '../adapters/persistence/sqlite/SqliteLearnerRepository.js';
 import { SqliteAttemptRepository } from '../adapters/persistence/sqlite/SqliteAttemptRepository.js';
 import { SqliteEvaluationRepository } from '../adapters/persistence/sqlite/SqliteEvaluationRepository.js';
@@ -13,8 +13,6 @@ import { Feedback, type CriterionFeedback } from '../domain/Feedback.js';
 import { Rubric } from '../domain/Rubric.js';
 import { ALL_DIMENSIONS, REQUIRED_SECTION_KEYS, type AnchorScore, type Dimension } from '../domain/types.js';
 import type { Problem } from '../domain/Problem.js';
-
-const RUBRIC_VERSION = 'v1';
 
 /** `problems` has no `save()` on its port (read-only from the app's point of view), so this
  * seeds it directly — `INSERT OR IGNORE` on the primary key keeps re-runs idempotent. */

@@ -30,10 +30,10 @@ text
 describe('practice loop (fake evaluator)', () => {
   let app: ReturnType<typeof createApp>;
 
-  beforeEach(() => {
+  beforeEach(async () => {
     const db = openDb(':memory:');
     runMigrations(db);
-    seedDb(db);
+    await seedDb(db);
     const learners = new SqliteLearnerRepository(db);
     const problems = new SqliteProblemRepository(db);
     const attempts = new SqliteAttemptRepository(db);
