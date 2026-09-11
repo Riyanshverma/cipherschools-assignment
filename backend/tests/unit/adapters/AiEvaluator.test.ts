@@ -36,6 +36,7 @@ describe('AiEvaluator', () => {
     await vi.waitFor(() => expect(outcome).toBeDefined());
     expect(outcome!.kind).toBe('completed');
     expect(completeJson).toHaveBeenCalledTimes(2);
+    expect(recorder.record).toHaveBeenCalledTimes(1); // never called once per attempt — only once, after success
   });
 
   it('fails after exhausting 2 retries on persistently malformed output, applying nothing partially', async () => {
@@ -48,6 +49,7 @@ describe('AiEvaluator', () => {
     await vi.waitFor(() => expect(outcome).toBeDefined());
     expect(outcome!.kind).toBe('failed');
     expect(completeJson).toHaveBeenCalledTimes(3); // 1 initial + 2 retries
+    expect(recorder.record).toHaveBeenCalledTimes(1); // exhausted retries record failure once, not once per attempt
   });
 
   it('sends the problem scope boundary in the prompt so the model is bounded to the problem as posed', async () => {

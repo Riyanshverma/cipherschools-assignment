@@ -35,6 +35,7 @@ export function buildPrompt(
     'You are evaluating a low-level design (LLD) submission against an 8-dimension rubric.',
     'Score every dimension 0-4 using the named anchors below. Never abstain — always give a score.',
     'Cite evidence only as exact quotes from the submitted sections.',
+    'concern, whyItMatters, and suggestion must be filled in together: give all three when you have a concern, or leave all three null when you don\'t.',
     '',
     'Rubric:',
     renderRubric(rubric),

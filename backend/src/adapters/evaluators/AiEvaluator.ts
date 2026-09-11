@@ -36,7 +36,15 @@ export class AiEvaluator implements Evaluator {
     const { systemPrompt, userPrompt } = buildPrompt(document, rubric, context);
     const totalAttempts = 1 + this.maxRetries;
 
-    for (let attempt = 0; attempt < totalAttempts; attempt++) {
+    // recorder.record is called exactly once, after this loop — never inside
+    // it. Keeping it out of the try/catch below matters: recorder.record can
+    // itself throw/reject (real repository I/O), and that must never be
+    // mistaken for "malformed AI response" and retried — doing so would both
+    // burn a needless paid LLM call and risk calling record() a second time
+    // if a later attempt then succeeds.
+    let result: { summary: string; criteria: RawCriterionFeedback[] } | undefined;
+
+    for (let attempt = 0; attempt < totalAttempts && !result; attempt++) {
       try {
         const raw = await this.llmClient.completeJson({
           systemPrompt, userPrompt,
@@ -50,12 +58,16 @@ export class AiEvaluator implements Evaluator {
             concern: c.concern, whyItMatters: c.whyItMatters, suggestion: c.suggestion,
             confidence: c.confidence,
           }));
-          await recorder.record(evaluationId, { kind: 'completed', summary: parsed.data.summary, criteria });
-          return;
+          result = { summary: parsed.data.summary, criteria };
         }
       } catch {
         // Thrown LlmClient errors count toward the same retry budget as a validation failure.
       }
+    }
+
+    if (result) {
+      await recorder.record(evaluationId, { kind: 'completed', summary: result.summary, criteria: result.criteria });
+      return;
     }
 
     await recorder.record(evaluationId, { kind: 'failed', reason: 'invalid AI response after retries' });
