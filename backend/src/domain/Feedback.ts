@@ -42,4 +42,20 @@ export class Feedback {
 
     return new Feedback(summary, criteria, topPriorities, aggregateScore);
   }
+
+  /**
+   * Rehydrates a Feedback whose fields were already computed and validated by build() at
+   * creation time — used by the persistence layer to reload stored feedback without a Rubric
+   * (which reconstructing via build() would require, and which repositories don't have access
+   * to) and without re-deriving aggregateScore/topPriorities, which could silently diverge from
+   * the values that were actually persisted.
+   */
+  static fromJSON(data: {
+    summary: string;
+    criteria: CriterionFeedback[];
+    topPriorities: Dimension[];
+    aggregateScore: AggregateScore | null;
+  }): Feedback {
+    return new Feedback(data.summary, data.criteria, data.topPriorities, data.aggregateScore);
+  }
 }
