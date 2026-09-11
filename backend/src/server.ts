@@ -1,5 +1,6 @@
 import { mkdirSync } from 'node:fs';
 import { dirname } from 'node:path';
+import OpenAI from 'openai';
 import { createApp } from './api/app.js';
 import { openDb, runMigrations } from './adapters/persistence/sqlite/db.js';
 import { SqliteLearnerRepository } from './adapters/persistence/sqlite/SqliteLearnerRepository.js';
@@ -8,7 +9,9 @@ import { SqliteAttemptRepository } from './adapters/persistence/sqlite/SqliteAtt
 import { SqliteEvaluationRepository } from './adapters/persistence/sqlite/SqliteEvaluationRepository.js';
 import { EvaluationOrchestrator } from './application/EvaluationOrchestrator.js';
 import { MarkdownFormatAdapter } from './adapters/format/MarkdownFormatAdapter.js';
-import { FakeEvaluator } from './adapters/evaluators/FakeEvaluator.js';
+import { OpenAiLlmClient } from './adapters/llm/OpenAiLlmClient.js';
+import { AiEvaluator } from './adapters/evaluators/AiEvaluator.js';
+import { RuleBasedEvaluator } from './adapters/evaluators/RuleBasedEvaluator.js';
 import { Rubric } from './domain/Rubric.js';
 import { seedDb } from './seed/seedDb.js';
 import { GLOBAL_RUBRIC_DIMENSIONS, RUBRIC_VERSION } from './seed/rubric.js';
@@ -26,21 +29,21 @@ async function main(): Promise<void> {
   const attempts = new SqliteAttemptRepository(db);
   const evaluations = new SqliteEvaluationRepository(db);
 
-  // Placeholder evaluator for local dev — Task 16 replaces this with the real AI + rule-based
-  // evaluators registered behind the Evaluator port.
-  const placeholderEvaluator = new FakeEvaluator({
-    kind: 'complete',
-    outcome: { kind: 'completed', summary: 'Placeholder evaluation — AI evaluator not wired yet.', criteria: [] },
-  });
+  const sdkClient = new OpenAI({ baseURL: process.env.OPENAI_BASE_URL, apiKey: process.env.OPENAI_API_KEY });
+  const llmClient = new OpenAiLlmClient(sdkClient, process.env.OPENAI_MODEL ?? 'gpt-5-nano');
+  const evaluators = [
+    new AiEvaluator(llmClient, Number(process.env.LLM_MAX_RETRIES ?? 2)),
+    new RuleBasedEvaluator(),
+  ];
 
   const orchestrator = new EvaluationOrchestrator(
     attempts,
     evaluations,
     problems,
     new Map([['markdown', new MarkdownFormatAdapter()]]),
-    [placeholderEvaluator],
+    evaluators,
     (problem) => new Rubric(RUBRIC_VERSION, GLOBAL_RUBRIC_DIMENSIONS, problem.rubricWeights, problem.scopeBoundary),
-    60000,
+    Number(process.env.LLM_TIMEOUT_MS ?? 60000),
   );
 
   await orchestrator.sweepStrandedEvaluations();
