@@ -43,7 +43,7 @@ async function main(): Promise<void> {
     new Map([['markdown', new MarkdownFormatAdapter()]]),
     evaluators,
     (problem) => new Rubric(RUBRIC_VERSION, GLOBAL_RUBRIC_DIMENSIONS, problem.rubricWeights, problem.scopeBoundary),
-    60000,
+    Number(process.env.LLM_TIMEOUT_MS ?? 60000),
   );
 
   await orchestrator.sweepStrandedEvaluations();
