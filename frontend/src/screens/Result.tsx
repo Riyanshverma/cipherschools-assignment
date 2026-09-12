@@ -40,7 +40,11 @@ export function Result() {
           timerRef.current = setTimeout(poll, POLL_MS);
         }
       } catch (err) {
-        if (!cancelled) setError(err instanceof Error ? err.message : String(err));
+        if (cancelled) return;
+        // A fetch error (network blip, transient 5xx) is not a terminal evaluation state —
+        // keep whatever was last successfully rendered and keep polling, same as the happy path.
+        setError(err instanceof Error ? err.message : String(err));
+        timerRef.current = setTimeout(poll, POLL_MS);
       }
     }
 
@@ -51,18 +55,14 @@ export function Result() {
     };
   }, [id]);
 
-  if (error) {
-    return (
-      <div className="screen">
-        <p className="error">Failed to load attempt: {error}</p>
-      </div>
-    );
-  }
-
   if (!attempt) {
     return (
       <div className="screen">
-        <p className="muted">Loading…</p>
+        {error ? (
+          <p className="error">Failed to load attempt: {error}</p>
+        ) : (
+          <p className="muted">Loading…</p>
+        )}
       </div>
     );
   }
@@ -77,6 +77,8 @@ export function Result() {
         <Link to="/">← All problems</Link>
       </p>
       <h1>Attempt Result</h1>
+
+      {error && <p className="muted">Having trouble reaching the server, retrying…</p>}
 
       <EvaluationPanel title="AI Evaluation" evaluation={ai} kind="ai" />
       <EvaluationPanel title="Automated Checks (rule-based)" evaluation={rule} kind="rule" />

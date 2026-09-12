@@ -139,7 +139,7 @@ async function seedDemoLearner(db: Database.Database): Promise<void> {
     await attemptRepo.save(attempt);
 
     const rubric = new Rubric(RUBRIC_VERSION, GLOBAL_RUBRIC_DIMENSIONS, seed.problem.rubricWeights, seed.problem.scopeBoundary);
-    const evaluation = new Evaluation(seed.evaluationId, seed.attemptId, 'fake', RUBRIC_VERSION, createdAt);
+    const evaluation = new Evaluation(seed.evaluationId, seed.attemptId, 'ai', RUBRIC_VERSION, createdAt);
     evaluation.markRunning();
     evaluation.complete(demoFeedback(rubric, seed.scores));
     await evaluationRepo.save(evaluation);

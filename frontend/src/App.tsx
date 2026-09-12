@@ -2,7 +2,7 @@ import { Routes, Route } from 'react-router-dom';
 import { ProblemList } from './screens/ProblemList';
 import { ProblemDetail } from './screens/ProblemDetail';
 import { Result } from './screens/Result';
-import { LearnerHistoryPage } from './pages/LearnerHistoryPage';
+import { History } from './screens/History';
 
 function App() {
   return (
@@ -10,7 +10,7 @@ function App() {
       <Route path="/" element={<ProblemList />} />
       <Route path="/problems/:id" element={<ProblemDetail />} />
       <Route path="/attempts/:id" element={<Result />} />
-      <Route path="/learners/:id/history" element={<LearnerHistoryPage />} />
+      <Route path="/learners/:id/history" element={<History />} />
     </Routes>
   );
 }
