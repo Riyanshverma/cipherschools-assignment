@@ -84,7 +84,12 @@ export function ProblemList() {
 
   return (
     <div className="screen">
-      <h1>Problems</h1>
+      <div className="history-item-header">
+        <h1>Problems</h1>
+        <Link to={`/learners/${learnerId}/history`} className="btn">
+          View history
+        </Link>
+      </div>
       <ul className="problem-list">
         {problems.map((p) => (
           <li key={p.id} className="card">

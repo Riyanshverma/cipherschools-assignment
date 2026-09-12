@@ -27,7 +27,7 @@ export function createApp(deps: AppDependencies): express.Express {
   app.use(learnersRouter(deps.learners));
   app.use(problemsRouter(deps.problems));
   app.use(attemptsRouter(deps.attempts, deps.evaluations, deps.orchestrator));
-  app.use(historyRouter(deps.attempts));
+  app.use(historyRouter(deps.attempts, deps.evaluations));
 
   // Thrown "X not found" errors from the orchestrator/repositories become 404s; anything else 500.
   app.use((err: unknown, _req: express.Request, res: express.Response, _next: express.NextFunction) => {

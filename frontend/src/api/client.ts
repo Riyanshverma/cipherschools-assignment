@@ -102,13 +102,30 @@ export interface AttemptDetail {
 
 export interface RetryEvaluationResponse { evaluationId: string }
 
-// ---- GET /learners/:id/history (backend/src/api/routes/history.ts) ----
+// ---- GET /learners/:id/history (backend/src/api/routes/history.ts, backend/src/application/HistoryProjection.ts) ----
 
-export interface HistoryEntry {
-  id: string;
+export interface DimensionDelta {
+  dimension: Dimension;
+  previousScore: number | null;
+  currentScore: number | null;
+  delta: number | null;
+}
+
+export interface AttemptSummary {
+  attemptId: string;
   problemId: string;
-  state: AttemptState;
-  createdAt: string; // Date, serialized to ISO string over JSON
+  submittedAt: string; // Date, serialized to ISO string over JSON
+  deltas: DimensionDelta[];
+}
+
+export interface RecurringWeakness {
+  dimension: Dimension;
+  lowScoreCount: number;
+}
+
+export interface HistoryResponse {
+  attempts: AttemptSummary[];
+  recurringWeaknesses: RecurringWeakness[];
 }
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
@@ -162,7 +179,7 @@ export function retryEvaluation(attemptId: string, evaluatorId: string): Promise
   });
 }
 
-/** GET /learners/:id/history — raw attempt list for a learner. */
-export function getHistory(learnerId: string): Promise<HistoryEntry[]> {
-  return request<HistoryEntry[]>(`/learners/${learnerId}/history`);
+/** GET /learners/:id/history — per-dimension deltas + recurring weaknesses for a learner. */
+export function getHistory(learnerId: string): Promise<HistoryResponse> {
+  return request<HistoryResponse>(`/learners/${learnerId}/history`);
 }
