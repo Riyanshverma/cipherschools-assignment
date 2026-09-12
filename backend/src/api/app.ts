@@ -22,6 +22,22 @@ export interface AppDependencies {
 export function createApp(deps: AppDependencies): express.Express {
   const app = express();
   app.use(express.json());
+
+  // The frontend (Vite dev server) and backend run on different origins/ports; the browser
+  // blocks cross-origin requests without this. No cookies/credentials are ever sent (decision
+  // 12 — identity is a declared handle, not a session), so a wildcard origin is correct here,
+  // not a security shortcut.
+  app.use((req, res, next) => {
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+    if (req.method === 'OPTIONS') {
+      res.sendStatus(204);
+      return;
+    }
+    next();
+  });
+
   app.get('/health', (_req, res) => res.json({ status: 'ok' }));
 
   app.use(learnersRouter(deps.learners));
