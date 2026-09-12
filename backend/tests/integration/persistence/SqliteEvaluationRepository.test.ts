@@ -57,4 +57,16 @@ describe('SqliteEvaluationRepository', () => {
     expect(loaded?.getState()).toBe('Completed');
     expect(loaded?.getFeedback()?.summary).toBe('looks solid overall');
   });
+
+  it('round-trips a Failed evaluation with its failure reason', async () => {
+    const evaluation = new Evaluation('e1', 'a1', 'ai', 'v1', new Date());
+    evaluation.markRunning();
+    evaluation.fail('timeout');
+
+    await repo.save(evaluation);
+    const loaded = await repo.findById('e1');
+
+    expect(loaded?.getState()).toBe('Failed');
+    expect(loaded?.getFailureReason()).toBe('timeout');
+  });
 });
