@@ -109,6 +109,22 @@ describe('HistoryProjection.build', () => {
     expect(ru.delta).toBeNull();
   });
 
+  it('finds the immediately preceding same-problem attempt even when a different-problem attempt is interleaved', () => {
+    const parkingLot1 = submittedAttempt('a1', 'parking-lot', new Date('2026-01-01'), { requirementUnderstanding: 1 });
+    const vendingMachine = submittedAttempt('a2', 'vending-machine', new Date('2026-01-05'), {
+      requirementUnderstanding: 4,
+    });
+    const parkingLot2 = submittedAttempt('a3', 'parking-lot', new Date('2026-01-10'), { requirementUnderstanding: 3 });
+
+    const result = HistoryProjection.build([parkingLot1, vendingMachine, parkingLot2]);
+
+    const thirdSummary = result.attempts.find((a) => a.attemptId === 'a3')!;
+    const ru = thirdSummary.deltas.find((d) => d.dimension === 'requirementUnderstanding')!;
+    // must diff against a1 (previous parking-lot attempt: score 1), not a2 (vending-machine: 4),
+    // even though a2 is chronologically the immediately preceding attempt overall.
+    expect(ru).toEqual({ dimension: 'requirementUnderstanding', previousScore: 1, currentScore: 3, delta: 2 });
+  });
+
   it('ignores the rule-based evaluator for delta/recurring-weakness (it abstains on most dimensions)', () => {
     const attempt = new Attempt('a1', 'learner1', 'parking-lot', new Date('2026-01-01'));
     attempt.submit(Submission.create('raw', 'markdown', EMPTY_DOC, new Date('2026-01-01')));

@@ -26,32 +26,15 @@ export interface AttemptWithEvaluations {
   evaluations: Evaluation[];
 }
 
-const RULE_BASED_EVALUATOR_ID = 'rule-based';
 const AI_EVALUATOR_ID = 'ai';
 const LOW_SCORE_THRESHOLD = 1;
 const RECURRING_WEAKNESS_MIN_COUNT = 2;
 
-/**
- * Picks the Completed evaluation that drives delta/recurring-weakness analysis: the AI
- * evaluator's, when present, else any Completed evaluation that isn't the rule-based one.
- *
- * Judgment call: the plan says "only use the AI evaluator's scores" because the rule-based
- * evaluator abstains on 5/8 dimensions and can't meaningfully participate. Taken literally
- * (evaluatorId === 'ai' only), the seeded demo learner (backend/src/seed/seedDb.ts) would
- * produce zero deltas/weaknesses, since its seeded evaluations use evaluatorId 'fake' (it
- * writes evaluations directly rather than going through the real evaluator pipeline). The
- * underlying reason for the exclusion is "abstains on most dimensions", which is specifically
- * a rule-based-evaluator trait, not something 'fake' (or any other full-scoring evaluator)
- * shares — so this excludes only the rule-based evaluator by id, and prefers 'ai' when both
- * are present.
- */
+/** The Completed AI-evaluator evaluation for an attempt, if any — the only evaluator whose
+ * scores drive delta/recurring-weakness analysis (the rule-based evaluator abstains on 5/8
+ * dimensions and can't meaningfully participate; see backend/src/adapters/evaluators/AiEvaluator.ts). */
 function primaryScoringEvaluation(evaluations: Evaluation[]): Evaluation | null {
-  const completed = evaluations.filter((e) => e.getState() === 'Completed');
-  return (
-    completed.find((e) => e.evaluatorId === AI_EVALUATOR_ID) ??
-    completed.find((e) => e.evaluatorId !== RULE_BASED_EVALUATOR_ID) ??
-    null
-  );
+  return evaluations.find((e) => e.evaluatorId === AI_EVALUATOR_ID && e.getState() === 'Completed') ?? null;
 }
 
 function scoresByDimension(evaluation: Evaluation | null): Map<Dimension, number> {
